@@ -29,6 +29,17 @@ db.serialize(() => {
   `);
 });
 
+// mostrar un mensaje y los nombres de las tablas existentes
+app.get('/', (req, res) => {
+  db.all(`SELECT name FROM sqlite_master WHERE type='table'`, [], (err, tables) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const tableNames = tables.map(table => table.name);
+    res.send(`Este es el microservicio de gestión de socios. Tablas existentes: ${tableNames.join(', ')}`);
+  });
+});
+
 // Ruta per registrar un nou soci
 app.post('/socis', (req, res) => {
   const { nom, telefon, quota, categoria } = req.body;
@@ -45,9 +56,9 @@ app.post('/socis', (req, res) => {
 
 // Ruta per registrar un pagament
 app.post('/pagaments', (req, res) => {
-  const { soci_id, data, import } = req.body;
+  const { soci_id, data, importe } = req.body;
   db.run(`INSERT INTO Pagaments (soci_id, data, import) VALUES (?, ?, ?)`,
-    [soci_id, data, import],
+    [soci_id, data, importe],
     function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -91,7 +102,7 @@ app.get('/socis/:id/quotes', (req, res) => {
         return res.status(500).json({ error: err.message });
       }
       const quota = row.quota;
-      const totalPagat = pagaments.reduce((acc, pagament) => acc + pagament.import, 0);
+      const totalPagat = pagaments.reduce((acc, pagament) => acc + pagament.importe, 0);
       const totalPendents = quota - totalPagat;
       res.json({
         pagaments,
