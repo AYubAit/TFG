@@ -13,7 +13,7 @@ services:
     ports:
       - "${MONGO_AUTH_PORT}:27018"
     volumes:
-      - mongo-data:/data/db
+      - mongo-data2:/data/db
 
   finance-services:
     build: ./backend/finance-services
@@ -65,9 +65,8 @@ services:
       - PYTHONUNBUFFERED=1
 
   socios-service:
-    build: ./backend/socios-service/app
+    build: ./backend/socios-service
     volumes:
-      - ./backend/socios-service/app:/app
       - ./backend/socios-service/db:/db
     ports:
       - "${SOCIOS_PORT}:3000"
@@ -78,7 +77,7 @@ services:
     ports:
       - "${MONGO_TAREAS_PORT}:27019"
     volumes:
-      - mongo-data:/data/db
+      - mongo-data1:/data/db
 
   tareas-service:
     build: ./backend/tareas-service
@@ -113,7 +112,8 @@ services:
       - db_data:/var/lib/mysql
 
 volumes:
-  mongo-data:
+  mongo-data1:
+  mongo-data2:
   mysql_data:
   postgres_data:
   sqlite_data:

@@ -3,7 +3,7 @@ from app import app, get_db_connection
 from datetime import datetime
 
 # URL del microservicio externo para obtener usuarios
-USUARIOS_API_URL = 'http://microservicio-usuarios/api/usuarios'
+USUARIOS_API_URL = 'http://socios-service:3000/valid'
 
 @app.route('/votaciones', methods=['POST'])
 def crear_votacion():

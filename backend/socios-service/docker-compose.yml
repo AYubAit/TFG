@@ -2,9 +2,8 @@ version: '3.8'
 
 services:
   socios-service:
-    build: ./app
+    build: .
     volumes:
-      - ./app:/app
       - ./db:/db
     ports:
       - "3000:3000"

@@ -6,6 +6,8 @@ import (
     "log"
     "os"
     "net/http"
+     "encoding/json"
+    "io/ioutil"
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
@@ -62,21 +64,32 @@ func initDB() {
         log.Fatal("Error loading .env file")
     }
 
-    psqlInfo := fmt.Sprintf("host=db port=5432 user=%s "+
-        "password=%s dbname=%s sslmode=disable",
-        os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
+   // Crea la cadena de conexión usando fmt.Sprintf y variables de entorno
+   psqlInfo := fmt.Sprintf(
+    "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+    os.Getenv("POSTGRES_HOST"),
+    os.Getenv("POSTGRES_PORT"),
+    os.Getenv("POSTGRES_USER"),
+    os.Getenv("POSTGRES_PASSWORD"),
+    os.Getenv("POSTGRES_DB"),
+)
 
-    db, err = sql.Open("postgres", psqlInfo)
-    if err != nil {
-        log.Fatal(err)
-    }
+// Abre una conexión con la base de datos
+db, err := sql.Open("postgres", psqlInfo)
+if err != nil {
+    fmt.Printf("Error abriendo la conexión con la base de datos: %v\n", err)
+    return
+}
+defer db.Close() // Asegúrate de cerrar la conexión cuando el programa termine
 
-    err = db.Ping()
-    if err != nil {
-        log.Fatal(err)
-    }
+// Comprueba que la conexión sea válida
+err = db.Ping()
+if err != nil {
+    fmt.Printf("No se pudo conectar con la base de datos: %v\n", err)
+    return
+}
 
-    fmt.Println("Successfully connected!")
+fmt.Println("Conexión exitosa con la base de datos!")
 }
 
 func main() {

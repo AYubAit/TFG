@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const port = 3000;
 AUTH_SERVICE_URI= "http://auth-service:5001";
-
+app.use(express.json());
 const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization'];
   if (!token) {
@@ -22,7 +22,7 @@ const verifyToken = async (req, res, next) => {
 };
 
 
-app.use(express.json());
+
 // Aplicar el middleware globalmente
 app.use((req, res, next) => {
   if (req.path !== '/valid/:id') {  // Excluir el endpoint  si es necesario 
@@ -38,7 +38,7 @@ const db = new sqlite3.Database('/db/socis.db');
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS Socis (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id INTEGER PRIMARY KEY,
       nom TEXT,
       telefon TEXT,
       quota REAL,

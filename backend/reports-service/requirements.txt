@@ -1,4 +1,5 @@
-Flask==2.0.1
+Flask==2.0.3
 requests==2.25.1
 reportlab==3.5.67
 python-dotenv==0.19.0
+Werkzeug==2.0.3
