@@ -2,8 +2,29 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const port = 3000;
+AUTH_SERVICE_URI= "http://auth-service:5000";
+
+const verifyToken = async (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) {
+      return res.status(401).json({ msg: 'Missing token' });
+  }
+
+  try {
+      const response = await axios.post(`${AUTH_SERVICE_URI}/auth/verify`, {}, {
+          headers: { 'Authorization': token }
+      });
+      req.user = response.data.user;
+      next();
+  } catch (error) {
+      return res.status(401).json({ msg: 'Invalid token' });
+  }
+};
+
 
 app.use(express.json());
+// Aplicar el middleware globalmente
+app.use(verifyToken);
 
 const db = new sqlite3.Database('/db/socis.db');
 

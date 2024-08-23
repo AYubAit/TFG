@@ -12,6 +12,29 @@ import (
     _ "github.com/lib/pq"
 )
 
+func verifyToken(c *gin.Context) {
+    token := c.GetHeader("Authorization")
+    if token == "" {
+        c.JSON(http.StatusUnauthorized, gin.H{"msg": "Missing token"})
+        c.Abort()
+        return
+    }
+
+    authServiceURI := os.Getenv("AUTH_SERVICE_URI")
+    resp, err := http.Post(authServiceURI+"/auth/verify", "application/json", nil)
+    if err != nil || resp.StatusCode != 200 {
+        c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
+        c.Abort()
+        return
+    }
+
+    body, _ := ioutil.ReadAll(resp.Body)
+    var result map[string]interface{}
+    json.Unmarshal(body, &result)
+    c.Set("user", result["user"])
+    c.Next()
+}
+
 type Projecte struct {
     ID          int     `json:"id_projecte"`
     Nom         string  `json:"nom_projecte"`
@@ -61,6 +84,7 @@ func main() {
     defer db.Close()
 
     r := gin.Default()
+    r.Use(verifyToken)  // Aplicar el middleware globalmente
 
     r.GET("/", homeHandler)
     r.GET("/projects", getProjects)

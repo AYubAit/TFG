@@ -4,6 +4,20 @@ import os
 
 
 app = Flask(__name__)
+def verify_token():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"msg": "Missing token"}), 401
+
+    response = requests.post(f"{os.getenv('AUTH_SERVICE_URI')}/auth/verify", headers={"Authorization": token})
+    if response.status_code != 200:
+        return jsonify({"msg": "Invalid token"}), 401
+
+    request.user = response.json().get('user')
+
+@app.before_request
+def before_request():
+        verify_token()
 
 # Configuración de la base de datos MySQL
 app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')

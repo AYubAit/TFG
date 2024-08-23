@@ -5,7 +5,25 @@ const config = require('./config');
 
 const app = express();
 const port = config.port;
+const verifyToken = async (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) {
+      return res.status(401).json({ msg: 'Missing token' });
+  }
 
+  try {
+      const response = await axios.post(`${process.env.AUTH_SERVICE_URI}/auth/verify`, {}, {
+          headers: { 'Authorization': token }
+      });
+      req.user = response.data.user;
+      next();
+  } catch (error) {
+      return res.status(401).json({ msg: 'Invalid token' });
+  }
+};
+
+// Aplicar el middleware globalmente
+app.use(verifyToken);
 app.use(bodyParser.json());
 
 mongoose.connect(config.mongoURI, {

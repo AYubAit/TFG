@@ -1,11 +1,10 @@
-import os
-from flask import Flask
+from app import create_app
+from flask import Flask, request, jsonify
+import requests
 from dotenv import load_dotenv
-import mysql.connector
 
-load_dotenv()
+app = create_app()
 
-app = Flask(__name__)
 def verify_token():
     token = request.headers.get('Authorization')
     if not token:
@@ -19,17 +18,7 @@ def verify_token():
 
 @app.before_request
 def before_request():
-    if request.endpoint != 'login':  # Excluir el endpoint de login si es necesario
         verify_token()
 
-def get_db_connection():
-    return mysql.connector.connect(
-        host='db',
-        user=os.getenv('MYSQL_USER'),
-        password=os.getenv('MYSQL_PASSWORD'),
-        database=os.getenv('MYSQL_DATABASE'),
-        charset='utf8mb4',
-        collation='utf8mb4_general_ci'
-    )
-
-from app import routes
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
