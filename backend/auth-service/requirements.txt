@@ -1,0 +1,7 @@
+Flask
+Flask-PyMongo
+Flask-JWT-Extended
+python-dotenv
+werkzeug
+requests
+gunicorn

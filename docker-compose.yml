@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "${AUTH_PORT}:5001"
+    depends_on:
+      - mongo-auth
+
+  mongo-auth:
+    image: mongo:latest
+    ports:
+      - "${MONGO_AUTH_PORT}:27018"
+    volumes:
+      - mongo-data:/data/db
+
+  finance-services:
+    build: ./backend/finance-services
+    volumes:
+      - ./backend/finance-services:/app
+    ports:
+      - "${FINANCE_PORT}:5002"
+    env_file:
+      - ./backend/finance-services/.env
+    depends_on:
+      - mysql-finance
+
+  mysql-finance:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/finance-services/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  project-service:
+    build:
+      context: ./backend/project-service/app
+    ports:
+      - "${PROJECT_PORT}:5003"
+    depends_on:
+      - postgres-project
+    env_file:
+      - ./backend/project-service/.env
+
+  postgres-project:
+    build:
+      context: ./backend/project-service/db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5433"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  reports-service:
+    build: ./backend/reports-service
+    ports:
+      - "${REPORTS_PORT}:5004"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  socios-service:
+    build: ./backend/socios-service/app
+    volumes:
+      - ./backend/socios-service/app:/app
+      - ./backend/socios-service/db:/db
+    ports:
+      - "${SOCIOS_PORT}:3000"
+
+  mongodb-tareas:
+    image: mongo:latest
+    container_name: mongodb-tareas
+    ports:
+      - "${MONGO_TAREAS_PORT}:27019"
+    volumes:
+      - mongo-data:/data/db
+
+  tareas-service:
+    build: ./backend/tareas-service
+    container_name: tareas-service
+    ports:
+      - "${TAREAS_PORT}:3001"
+    environment:
+      - MONGODB_URI=mongodb://mongodb-tareas:27019/tareas
+    depends_on:
+      - mongodb-tareas
+
+  votacio-service:
+    build: ./backend/votacio-service
+    ports:
+      - "${VOTACIO_PORT}:5005"
+    environment:
+      - FLASK_APP=${FLASK_APP}
+      - FLASK_ENV=${FLASK_ENV}
+    depends_on:
+      - mariadb-votacio
+
+  mariadb-votacio:
+    build:
+      context: ./backend/votacio-service
+      dockerfile: Dockerfile.db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  mongo-data:
+  mysql_data:
+  postgres_data:
+  sqlite_data:
+  db_data:
