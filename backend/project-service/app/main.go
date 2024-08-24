@@ -8,14 +8,44 @@ import (
     "net/http"
      "encoding/json"
     "io/ioutil"
-
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promauto"
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     _ "github.com/lib/pq"
 )
 
+
+var (
+    opsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+        Name: "myapp_processed_ops_total",
+        Help: "The total number of processed events",
+    })
+)
+
+func recordMetrics(c *gin.Context) {
+    go func() {
+        for {
+            opsProcessed.Inc()
+            
+            
+        }
+        c.JSON(http.StatusOK, opsProcessed)
+    }()
+}
+
 func verifyToken(c *gin.Context) {
     token := c.GetHeader("Authorization")
+
+     // Ignorar la ruta /metrics
+     if c.Request.URL.Path == "/metrics" {
+        c.Next()
+        
+    }
+
+
+
+
     if token == "" {
         c.JSON(http.StatusUnauthorized, gin.H{"msg": "Missing token"})
         c.Abort()
@@ -98,6 +128,10 @@ func main() {
 
     r := gin.Default()
     r.Use(verifyToken)  // Aplicar el middleware globalmente
+
+    
+
+    r.GET("/metrics", recordMetrics)
 
     r.GET("/", homeHandler)
     r.GET("/projects", getProjects)

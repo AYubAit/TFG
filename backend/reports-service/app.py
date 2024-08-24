@@ -16,8 +16,10 @@ def verify_token():
 
     request.user = response.json().get('user')
 
+
 @app.before_request
 def before_request():
+    if request.endpoint != 'metrics':  # Excluir el endpoint de metrics si es necesario
         verify_token()
 
 if __name__ == '__main__':

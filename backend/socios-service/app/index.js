@@ -1,11 +1,20 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
+const { collectDefaultMetrics, register }  = require('prom-client');
 const port = 3000;
 AUTH_SERVICE_URI= "http://auth-service:5001";
 app.use(express.json());
 const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization'];
+  
+  // Permitir acceso sin autenticación al endpoint /metrics
+  if (req.path === '/metrics') {
+    return next();
+  }
+  
+  
+  
   if (!token) {
       return res.status(401).json({ msg: 'Missing token' });
   }
@@ -55,6 +64,21 @@ db.serialize(() => {
     )
   `);
 });
+
+collectDefaultMetrics();
+
+
+// Endpoint para exponer métricas
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  try {
+    const metrics = await register.metrics();
+    res.end(metrics);
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+});
+
 
 // mostrar un mensaje y los nombres de las tablas existentes
 app.get('/', (req, res) => {

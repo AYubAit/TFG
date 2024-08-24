@@ -2,5 +2,6 @@ flask
 requests
 flask-mysqldb
 python-dotenv
-
+Response
+prometheus_client
 

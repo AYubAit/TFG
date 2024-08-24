@@ -1,9 +1,17 @@
 from flask import request, jsonify
 from app import app, get_db_connection
 from datetime import datetime
+from prometheus_client import Counter, generate_latest
+
 
 # URL del microservicio externo para obtener usuarios
 USUARIOS_API_URL = 'http://socios-service:3000/valid'
+REQUEST_COUNT = Counter('http_requests_total', 'Total number of HTTP requests')
+
+
+@app.route('/metrics')
+def metrics():
+    return Response(generate_latest(), content_type='text/plain')
 
 @app.route('/votaciones', methods=['POST'])
 def crear_votacion():
@@ -61,6 +69,7 @@ def crear_pregunta():
 
 @app.route('/respuestas', methods=['POST'])
 def crear_respuesta():
+    REQUEST_COUNT.inc()
     data = request.get_json()
     usuario_id = data['usuario_id']
     response = requests.get(f'{USUARIOS_API_URL}/{usuario_id}')

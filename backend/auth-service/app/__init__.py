@@ -21,7 +21,8 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=int(os.getenv("JWT_AC
 mongo.init_app(app)
 jwt.init_app(app)
 
-app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(auth_bp)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    
+    app.run(host="0.0.0.0", port=5001)

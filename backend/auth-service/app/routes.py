@@ -1,18 +1,25 @@
 # app/routes.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import requests
 from app.models import User  # Importar User desde app.models
 from app.extensions import mongo  # Importar mongo desde extensions
 from datetime import datetime  # Importar datetime para manejar fechas
+from prometheus_client import Counter, generate_latest
 
 auth_bp = Blueprint("auth", __name__)
+# Crear un contador
+REQUEST_COUNT = Counter('http_requests_total', 'Total number of HTTP requests')
+
+@auth_bp.route('/metrics')
+def metrics():
+    return Response(generate_latest(), content_type='text/plain')
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username")
     password = request.json.get("password")
-    
+    REQUEST_COUNT.inc()
     # Consultar al microservicio de socios para verificar existencia del usuario
     response = requests.get(f"{SOCIOS_SERVICE_URI}/socios/{username}")
     if response.status_code != 200:

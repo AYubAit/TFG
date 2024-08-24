@@ -35,6 +35,13 @@ services:
       - mysql_data:/var/lib/mysql
       - ./backend/finance-services/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  mysqlFinance-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql-finance:3306)
+    ports:
+      - "9104:9104"
+
   project-service:
     build:
       context: ./backend/project-service/app
@@ -56,6 +63,13 @@ services:
       - "${POSTGRES_PORT}:5433"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-project:5433/${POSTGRES_DB}
+    ports:
+      - "9187:9187"
 
   reports-service:
     build: ./backend/reports-service
@@ -89,6 +103,20 @@ services:
     depends_on:
       - mongodb-tareas
 
+  mongodbTareas-exporter:
+    image: percona/mongodb_exporter:0.40
+    environment:
+      - MONGODB_URI=mongodb://mongodb-tareas:27019
+    ports:
+      - "9216:9216"
+
+  mongodbAuth-exporter:
+    image: percona/mongodb_exporter:0.40
+    environment:
+      - MONGODB_URI=mongodb://mongo-auth:27018/authdb
+    ports:
+      - "9218:9218"
+
   votacio-service:
     build: ./backend/votacio-service
     ports:
@@ -110,6 +138,28 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+
+  mysqlVotacio-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mariadb-votacio:3306)/${MYSQL_DATABASE}
+    ports:
+      - "9105:9105"
+
+
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    volumes:
+       - ./backend/monitoring-service/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "9000:9000"
+    depends_on:
+      - prometheus
 
 volumes:
   mongo-data1:

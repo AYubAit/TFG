@@ -6,6 +6,7 @@ import mysql.connector
 load_dotenv()
 
 app = Flask(__name__)
+
 def verify_token():
     token = request.headers.get('Authorization')
     if not token:
@@ -19,7 +20,7 @@ def verify_token():
 
 @app.before_request
 def before_request():
-    if request.endpoint != 'login':  # Excluir el endpoint de login si es necesario
+    if request.endpoint != 'metrics':  # Excluir el endpoint de metrics si es necesario
         verify_token()
 
 def get_db_connection():

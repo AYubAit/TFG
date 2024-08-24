@@ -1,9 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
 import os
+from prometheus_client import Counter, generate_latest
 
+REQUEST_COUNT = Counter('http_requests_total', 'Total number of HTTP requests')
 
 app = Flask(__name__)
+
+
+
 def verify_token():
     token = request.headers.get('Authorization')
     if not token:
@@ -17,6 +22,7 @@ def verify_token():
 
 @app.before_request
 def before_request():
+    if request.endpoint != 'metrics':  # Excluir el endpoint de metrics si es necesario
         verify_token()
 
 # Configuración de la base de datos MySQL
@@ -26,6 +32,13 @@ app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
+
+
+@app.route('/metrics')
+def metrics():
+    return Response(generate_latest(), content_type='text/plain')
+
+
 @app.route('/', methods=['GET'])
 def home():
     cursor = mysql.connection.cursor()
