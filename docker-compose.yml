@@ -177,7 +177,36 @@ services:
     depends_on:
       - prometheus
 
+
+  mongo-pisignage:
+    image: mongo:4.4
+    #restart: unless-stopped
+    ports:
+      - 27017:27017
+    volumes:
+      - pimongodb:/data/db
+      - pimongodb_config:/data/configdb
+
+  pisignage-service:
+    build:  
+      context: ./backend/pisignage-service/
+    #restart: unless-stopped
+    ports:
+      - 4000:4000
+    volumes:
+      - pimedia:/media
+      - pidata:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+    depends_on:
+      - mongo-pisignage
+
 volumes:
+  pimongodb:
+  pimongodb_config:
+  pimedia:
+  pidata:
   mongo-data1:
   mongo-data2:
   mysql_data:
