@@ -3,7 +3,7 @@ node_modules/
 venv/
 dist/
 build/
-
+.vscode/
 *.log
 *.DS_Store
 *.pyc
