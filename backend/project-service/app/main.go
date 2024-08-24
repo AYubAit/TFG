@@ -25,11 +25,9 @@ var (
 
 func recordMetrics(c *gin.Context) {
     go func() {
-        for {
+        
             opsProcessed.Inc()
-            
-            
-        }
+        
         c.JSON(http.StatusOK, opsProcessed)
     }()
 }
@@ -40,11 +38,8 @@ func verifyToken(c *gin.Context) {
      // Ignorar la ruta /metrics
      if c.Request.URL.Path == "/metrics" {
         c.Next()
-        
+        return
     }
-
-
-
 
     if token == "" {
         c.JSON(http.StatusUnauthorized, gin.H{"msg": "Missing token"})
@@ -139,7 +134,7 @@ func main() {
     r.PUT("/projects/update", updateProjectStatus)
     r.POST("/donations/create", createDonation)
 
-    r.Run(":8080")
+    r.Run(":5003")
 }
 
 func homeHandler(c *gin.Context) {

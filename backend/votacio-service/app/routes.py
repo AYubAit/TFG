@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, Response
 from app import app, get_db_connection
 from datetime import datetime
 from prometheus_client import Counter, generate_latest

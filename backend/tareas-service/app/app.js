@@ -1,22 +1,27 @@
 const express = require('express');
-const prometheus = require('prom-client');
+const promClient  = require('prom-client');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const config = require('./config');
 
 const app = express();
 const port = config.port;
-// Crear un contador
-const counter = new prometheus.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-});
+//metricas
+const collectDefaultMetrics = promClient.collectDefaultMetrics;
+collectDefaultMetrics();
 
+const httpRequestDurationMicroseconds = new promClient.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'code'],
+  buckets: [0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
+});
 const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization'];
   // Permitir acceso sin autenticación al endpoint /metrics
   if (req.path === '/metrics') {
-    return next();
+     next();
+     return
   }
 
   if (!token) {
@@ -49,16 +54,11 @@ db.once('open', () => {
   console.log('Connected to MongoDB');
 });
 
-// Middleware para contar solicitudes
-app.use((req, res, next) => {
-  counter.inc();
-  next();
-});
 
 // Endpoint para métricas
-app.get('/metrics', (req, res) => {
-  res.set('Content-Type', prometheus.register.contentType);
-  res.end(prometheus.register.metrics());
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', promClient.register.contentType);
+  res.end(await promClient.register.metrics());
 });
 
 

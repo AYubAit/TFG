@@ -5,6 +5,8 @@ services:
     build: .
     ports:
       - "5001:5001"
+    environment:
+      - MONGODB_URI=mongodb://mongo-auth:27018/authdb
     depends_on:
       - mongo-auth
 
@@ -17,3 +19,5 @@ services:
 
 volumes:
   mongo-data:
+
+  

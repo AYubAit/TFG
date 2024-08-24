@@ -5,6 +5,8 @@ services:
     build: ./backend/auth-service
     ports:
       - "${AUTH_PORT}:5001"
+    environment:
+      - MONGODB_URI=mongodb://mongo-auth:${MONGO_AUTH_PORT}/authdb
     depends_on:
       - mongo-auth
 
@@ -37,8 +39,10 @@ services:
 
   mysqlFinance-exporter:
     image: prom/mysqld-exporter
-    environment:
-      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql-finance:3306)
+    volumes:
+      - ./backend/monitoring-service/mysql-exporter/configFinance.my-cnf:/cfg/config.my-cnf
+    command:
+      - '--config.my-cnf=/cfg/config.my-cnf'
     ports:
       - "9104:9104"
 
@@ -67,7 +71,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter
     environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-project:5433/${POSTGRES_DB}
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-project:${POSTGRES_PORT}/${POSTGRES_DB}
     ports:
       - "9187:9187"
 
@@ -77,6 +81,8 @@ services:
       - "${REPORTS_PORT}:5004"
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - ./backend/reports-service/.env
 
   socios-service:
     build: ./backend/socios-service
@@ -99,23 +105,24 @@ services:
     ports:
       - "${TAREAS_PORT}:3001"
     environment:
-      - MONGODB_URI=mongodb://mongodb-tareas:27019/tareas
+      - MONGODB_URI=mongodb://mongodb-tareas:${MONGO_TAREAS_PORT}/tareas
     depends_on:
       - mongodb-tareas
 
   mongodbTareas-exporter:
     image: percona/mongodb_exporter:0.40
     environment:
-      - MONGODB_URI=mongodb://mongodb-tareas:27019
+      - MONGODB_URI=mongodb://mongodb-tareas:${MONGO_TAREAS_PORT}
     ports:
       - "9216:9216"
 
   mongodbAuth-exporter:
     image: percona/mongodb_exporter:0.40
     environment:
-      - MONGODB_URI=mongodb://mongo-auth:27018/authdb
+      - MONGODB_URI=mongodb://mongo-auth:${MONGO_AUTH_PORT}   
     ports:
       - "9218:9218"
+    command: ["--web.listen-address=:9218"] 
 
   votacio-service:
     build: ./backend/votacio-service
@@ -126,6 +133,8 @@ services:
       - FLASK_ENV=${FLASK_ENV}
     depends_on:
       - mariadb-votacio
+    env_file:
+      - ./backend/votacio-service/.env
 
   mariadb-votacio:
     build:
@@ -141,8 +150,11 @@ services:
 
   mysqlVotacio-exporter:
     image: prom/mysqld-exporter
-    environment:
-      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mariadb-votacio:3306)/${MYSQL_DATABASE}
+    volumes:
+      - ./backend/monitoring-service/mysql-exporter/configVotacio.my-cnf:/cfg/config.my-cnf
+    command:
+      - '--config.my-cnf=/cfg/config.my-cnf'
+      - '--web.listen-address=:9105'
     ports:
       - "9105:9105"
 
@@ -158,6 +170,10 @@ services:
     image: grafana/grafana:latest
     ports:
       - "9000:9000"
+    environment:
+      - GF_PATHS_CONFIG=/etc/grafana/ayub.ini
+    volumes:
+      - ./backend/monitoring-service/grafana/config.ini/:/etc/grafana/ayub.ini
     depends_on:
       - prometheus
 

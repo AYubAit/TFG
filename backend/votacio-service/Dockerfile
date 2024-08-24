@@ -20,4 +20,3 @@ RUN chmod +x /entrypoint.sh
 # Establecer el script de entrada como el punto de entrada
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["flask", "run", "--host=0.0.0.0"]

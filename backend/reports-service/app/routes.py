@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from .services import fetch_data, generate_pdf
 from prometheus_client import Counter, generate_latest
 

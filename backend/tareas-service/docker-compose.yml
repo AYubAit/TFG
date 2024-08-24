@@ -18,6 +18,7 @@ services:
       - MONGODB_URI=mongodb://mongodb-tareas:27019/tareas
     depends_on:
       - mongodb-tareas
+      
 
 volumes:
   mongo-data:

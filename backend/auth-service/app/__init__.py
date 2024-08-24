@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 load_dotenv()  # Cargar variables de entorno desde el archivo .env
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = os.getenv("MONGO_URI")
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 SOCIOS_SERVICE_URI = os.getenv("SOCIOS_SERVICE_URI")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES")))
@@ -25,4 +25,4 @@ app.register_blueprint(auth_bp)
 
 if __name__ == "__main__":
     
-    app.run(host="0.0.0.0", port=5001)
+    app.run(host="0.0.0.0", port=os.getenv("AUTH_PORT"))
