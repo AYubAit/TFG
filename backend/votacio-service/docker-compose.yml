@@ -9,7 +9,7 @@ services:
       - FLASK_APP=${FLASK_APP}
       - FLASK_ENV=${FLASK_ENV}
     depends_on:
-      - db
+      - mariadb-votacio
 
   mariadb-votacio:
     build:
@@ -20,8 +20,12 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_TCP_PORT=${MARIADB_PORT}  
+
     volumes:
       - db_data:/var/lib/mysql
+    ports:
+      - "${MARIADB_PORT}:3300"
 
 volumes:
   db_data:

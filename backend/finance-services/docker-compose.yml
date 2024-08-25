@@ -15,11 +15,18 @@ services:
   mysql-finance:
     image: mysql:5.7
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_TCP_PORT=${MYSQLDB_PORT}
+    ports:
+      - "${MYSQLDB_PORT}:3301"
     volumes:
+      - ./my.cnf:/etc/mysql/my.cnf  # Mount directly as the main config file
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --defaults-file=/etc/mysql/my.cnf
 
 volumes:
   mysql_data:

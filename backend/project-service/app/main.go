@@ -10,6 +10,7 @@ import (
     "io/ioutil"
     "github.com/prometheus/client_golang/prometheus"
     "github.com/prometheus/client_golang/prometheus/promauto"
+     "github.com/prometheus/client_golang/prometheus/promhttp"
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     _ "github.com/lib/pq"
@@ -26,12 +27,10 @@ var (
 func recordMetrics(c *gin.Context) {
     opsProcessed.Inc()
     msg := gin.H{
-        "msg": "metrics",
-        "processed_ops_total": opsProcessed,
+        "msg": "metrics recorded",
     }
     c.JSON(http.StatusOK, msg)
 }
-
 
 
 func verifyToken(c *gin.Context) {
@@ -128,7 +127,7 @@ func main() {
 
     
 
-    r.GET("/metrics", recordMetrics)
+    r.GET("/metrics", gin.WrapH(promhttp.Handler())) // Exponiendo /metrics para Prometheus
 
     r.GET("/", homeHandler)
     r.GET("/projects", getProjects)

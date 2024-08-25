@@ -2,3 +2,4 @@
 user = root
 password = password
 host = mariadb-votacio
+port = 3300

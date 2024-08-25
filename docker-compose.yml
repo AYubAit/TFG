@@ -32,7 +32,13 @@ services:
     image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_PORT: ${MYSQLDB_PORT}
+      MYSQL_TCP_PORT: ${MYSQLDB_PORT}
+      MYSQL_USER: ${MYSQL_USER}
+    ports:
+      - "${MYSQLDB_PORT}:3301"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/finance-services/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -145,8 +151,12 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_TCP_PORT=${MARIADB_PORT}
+
     volumes:
       - mariadb_data:/var/lib/mysql
+    ports:
+      - "${MARIADB_PORT}:3300"
 
   mysqlVotacio-exporter:
     image: prom/mysqld-exporter

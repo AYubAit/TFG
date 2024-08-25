@@ -12,6 +12,8 @@ RUN go mod init proyectos
 RUN go mod tidy
 RUN go get github.com/joho/godotenv
 RUN go get github.com/gin-gonic/gin
+RUN go get github.com/prometheus/client_golang/prometheus/promhttp
+
 
 # Compilar la aplicación
 RUN go build -o main .

@@ -25,10 +25,11 @@ def before_request():
 
 def get_db_connection():
     return mysql.connector.connect(
-        host='db',
+        host='mariadb-votacio',
         user=os.getenv('MYSQL_USER'),
         password=os.getenv('MYSQL_PASSWORD'),
         database=os.getenv('MYSQL_DATABASE'),
+        port=os.getenv('MARIADB_PORT'),
         charset='utf8mb4',
         collation='utf8mb4_general_ci'
     )
