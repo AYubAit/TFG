@@ -32,3 +32,12 @@ scrape_configs:
   - job_name: 'mongodbAuth'
     static_configs:
       - targets: ['mongodbAuth-exporter:9218']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+rule_files:
+  - 'alert_rules.yml'

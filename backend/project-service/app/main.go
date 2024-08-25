@@ -24,13 +24,15 @@ var (
 )
 
 func recordMetrics(c *gin.Context) {
-    go func() {
-        
-            opsProcessed.Inc()
-        
-        c.JSON(http.StatusOK, opsProcessed)
-    }()
+    opsProcessed.Inc()
+    msg := gin.H{
+        "msg": "metrics",
+        "processed_ops_total": opsProcessed,
+    }
+    c.JSON(http.StatusOK, msg)
 }
+
+
 
 func verifyToken(c *gin.Context) {
     token := c.GetHeader("Authorization")

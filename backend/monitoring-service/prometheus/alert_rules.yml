@@ -1,0 +1,11 @@
+groups:
+  - name: example
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: 'critical'
+        annotations:
+          summary: 'instancia {{ $labels.instance }} Caigut'
+          description: '{{ $labels.instance }} esta caigut. {{ $labels.job }} caigut mes de 5 minuts.'
