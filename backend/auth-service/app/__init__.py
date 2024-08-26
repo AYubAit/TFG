@@ -15,8 +15,9 @@ load_dotenv()  # Cargar variables de entorno desde el archivo .env
 app = Flask(__name__)
 app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-SOCIOS_SERVICE_URI = os.getenv("SOCIOS_SERVICE_URI")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES")))
+app.config["SOCIOS_SERVICE_URI"] = os.getenv("SOCIOS_SERVICE_URI")
+
 
 mongo.init_app(app)
 jwt.init_app(app)

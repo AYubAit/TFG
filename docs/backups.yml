@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "${AUTH_PORT}:5001"
+    environment:
+      - MONGODB_URI=mongodb://mongo-auth:${MONGO_AUTH_PORT}/authdb
+    depends_on:
+      - mongo-auth
+
+  mongo-auth:
+    image: mongo:latest
+    ports:
+      - "${MONGO_AUTH_PORT}:27018"
+    volumes:
+      - mongo-data2:/data/db
+
+  # Servei de còpia de seguretat per a MongoDB
+  mongo-auth-backup:
+    image: mongo:latest
+    command: >
+      bash -c 'mongodump --uri=${MONGODB_URI} --out=/backup && tar -czvf /backup/mongo-auth-backup.tar.gz /backup'
+    environment:
+      - MONGODB_URI=mongodb://mongo-auth:${MONGO_AUTH_PORT}/authdb
+    volumes:
+      - mongo-auth-backup:/backup
+    depends_on:
+      - mongo-auth
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  finance-services:
+    build: ./backend/finance-services
+    volumes:
+      - ./backend/finance-services:/app
+    ports:
+      - "${FINANCE_PORT}:5002"
+    env_file:
+      - ./backend/finance-services/.env
+    depends_on:
+      - mysql-finance
+
+  mysql-finance:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_PORT: ${MYSQLDB_PORT}
+      MYSQL_TCP_PORT: ${MYSQLDB_PORT}
+      MYSQL_USER: ${MYSQL_USER}
+    ports:
+      - "${MYSQLDB_PORT}:3301"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/finance-services/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # Servei de còpia de seguretat per a MySQL
+  mysql-finance-backup:
+    image: mysql:5.7
+    command: >
+      bash -c 'mysqldump -u${MYSQL_USER} -p${MYSQL_PASSWORD} --all-databases > /backup/mysql-finance-backup.sql && tar -czvf /backup/mysql-finance-backup.tar.gz /backup'
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_PORT: ${MYSQLDB_PORT}
+      MYSQL_TCP_PORT: ${MYSQLDB_PORT}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - mysql-finance-backup:/backup
+    depends_on:
+      - mysql-finance
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  # Altres serveis...
+
+volumes:
+  mongo-data2:
+  mysql_data:
+  mongo-auth-backup:
+  mysql-finance-backup:

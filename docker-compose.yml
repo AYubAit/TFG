@@ -7,6 +7,9 @@ services:
       - "${AUTH_PORT}:5001"
     environment:
       - MONGODB_URI=mongodb://mongo-auth:${MONGO_AUTH_PORT}/authdb
+      
+    env_file:
+      - ./backend/auth-service/.env
     depends_on:
       - mongo-auth
 
@@ -16,6 +19,7 @@ services:
       - "${MONGO_AUTH_PORT}:27018"
     volumes:
       - mongo-data2:/data/db
+    command: mongod --port ${MONGO_AUTH_PORT}
 
   finance-services:
     build: ./backend/finance-services
@@ -104,6 +108,7 @@ services:
       - "${MONGO_TAREAS_PORT}:27019"
     volumes:
       - mongo-data1:/data/db
+    command: mongod --port ${MONGO_TAREAS_PORT}
 
   tareas-service:
     build: ./backend/tareas-service

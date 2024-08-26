@@ -9,6 +9,8 @@ services:
       - MONGODB_URI=mongodb://mongo-auth:27018/authdb
     depends_on:
       - mongo-auth
+    env_file:
+      - .env
 
   mongo-auth:
     image: mongo:latest
@@ -16,6 +18,7 @@ services:
       - "27018:27018"
     volumes:
       - mongo-data:/data/db
+  
 
 volumes:
   mongo-data:

@@ -33,13 +33,14 @@ const verifyToken = async (req, res, next) => {
 
 
 // Aplicar el middleware globalmente
+/*
 app.use((req, res, next) => {
   if (req.path !== '/valid/:id') {  // Excluir el endpoint  si es necesario 
       verifyToken(req, res, next);
   } else {
       next();
   }
-});
+});*/
 
 const db = new sqlite3.Database('/db/socis.db');
 
@@ -93,16 +94,16 @@ app.get('/', (req, res) => {
 
 // Ruta per registrar un nou soci
 app.post('/socis', (req, res) => {
-  const { nom, telefon, quota, categoria } = req.body;
-  db.run(`INSERT INTO Socis (nom, telefon, quota, categoria) VALUES (?, ?, ?, ?)`,
-    [nom, telefon, quota, categoria],
+  const { id, nom, telefon, quota, categoria } = req.body;
+  db.run(`INSERT INTO Socis (id,nom, telefon, quota, categoria) VALUES (?, ?, ?, ?, ?)`,
+    [id, nom, telefon, quota, categoria],
     function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
       res.status(201).json({ id: this.lastID });
     }
-  );
+  );  
 });
 
 // Ruta per registrar un pagament
@@ -135,6 +136,9 @@ app.get('/socis/:id', (req, res) => {
   db.get(`SELECT * FROM Socis WHERE id = ?`, [id], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Soci no trobat' });
     }
     res.json(row);
   });
