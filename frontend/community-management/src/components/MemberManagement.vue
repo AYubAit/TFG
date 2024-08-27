@@ -151,6 +151,7 @@ const saveSoci = () => {
             .then((newSoci) => {
                 socis.value.push(newSoci);
                 closeDialog();
+                
             })
             .catch((error) => console.error('Error creating soci:', error));
     }

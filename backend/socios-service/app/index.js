@@ -98,6 +98,29 @@ app.get('/', (req, res) => {
   });
 });
 
+// mostrar un mensaje y los nombres de las tablas existentes
+app.get('/socis/:id', (req, res) => {
+  db.all(`SELECT * FROM Socis WHERE id=?`, [req.params.id], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  
+    res.json(rows);
+  });
+});
+
+
+// mostrar un mensaje y los nombres de las tablas existentes
+app.get('/socis', (req, res) => {
+  db.all(`SELECT * FROM Socis`, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  
+    res.json(rows);
+  });
+});
+
 
 // Ruta per obtenir socis amb les quotes pendents
 app.get('/socisAmbCuotesPendents', (req, res) => {
@@ -121,18 +144,18 @@ app.get('/socisAmbCuotesPendents', (req, res) => {
 
 // Ruta per crear un nou soci
 app.post('/socis', (req, res) => {
-  const { nom, telefon, quota , categoria } = req.body;
+  const { Nom, Telefon, Quota , Categoria } = req.body;
 
-  if (!nom || !telefon || !quota) {
+  if (!Nom || !Telefon || !Quota || !Categoria) {
     return res.status(400).json({ error: "Falten dades per crear el soci" });
   }
 
   const query = `INSERT INTO Socis (nom, telefon, quota, categoria) VALUES (?, ?, ?,?)`;
-  db.run(query, [nom, telefon, quota, categoria], function (err) {
+  db.run(query, [Nom, Telefon, Quota, Categoria], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.status(201).json({ id: this.lastID, nom, telefon, quota });
+    res.status(201).json({ id: this.lastID, Nom, Telefon, Quota, Categoria });
   });
 });
 
