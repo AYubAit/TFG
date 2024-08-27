@@ -17,21 +17,23 @@ REQUEST_COUNT = Counter('http_requests_total', 'Total number of HTTP requests')
 def metrics():
     return Response(generate_latest(), content_type='text/plain')
 
-
-
 @auth_bp.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username")
     password = request.json.get("password")
     REQUEST_COUNT.inc()
-    id=username
+    id = username
+
     # Consultar al microservicio de socios para verificar existencia del usuario
-    
     response = requests.get(f"{SOCIOS_SERVICE_URI}/socis/{id}")
 
     if response.status_code != 200:
         return jsonify({"msg": "No eres socio - not found in socios"}), 404
-    
+
+    # Obtener la información del usuario desde el microservicio
+    user_info = response.json()
+    role = user_info.get("categoria")  # Obtener el rol del campo 'categoria'
+
     # Verificar si el usuario ya existe en la base de datos de autenticación
     user_data = mongo.db.users.find_one({"username": username})
     if user_data:
@@ -51,7 +53,8 @@ def login():
         user_dict["last_access"] = datetime.utcnow()
         mongo.db.users.insert_one(user_dict)
     
-    access_token = create_access_token(identity=username)
+    # Crear el JWT con el rol del usuario
+    access_token = create_access_token(identity={"username": username, "role": role})
     return jsonify(access_token=access_token), 200
 
 @auth_bp.route("/verify", methods=["POST"])
@@ -59,3 +62,4 @@ def login():
 def verify():
     current_user = get_jwt_identity()
     return jsonify(user=current_user), 200
+    

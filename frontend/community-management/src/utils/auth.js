@@ -1,35 +1,49 @@
 // src/utils/auth.js
+import { jwtDecode } from 'jwt-decode';
 
-import jwtDecode from 'jwt-decode'; // Importa la llibreria per decodificar el JWT
 
-function getUser() {
-  const token = localStorage.getItem('authToken'); // O sessionStorage, depenent d'on guardis el token
+// Aquesta funció ja existeix i obté l'usuari del token
 
+
+// Nova funció per obtenir el rol de l'usuari
+
+
+export function isAuthenticated() {
+  const token = localStorage.getItem('authToken');
   if (!token) {
-    return null; // No hi ha cap usuari loggejat
+    return false;
   }
 
   try {
-    const decodedToken = jwtDecode(token); // Decodifica el token per obtenir les dades de l'usuari
-    const currentTime = Date.now() / 1000; // Temps actual en segons
-
-    // Verifica si el token ha expirat
-    if (decodedToken.exp < currentTime) {
-      localStorage.removeItem('authToken'); // Elimina el token si ha expirat
-      return null;
-    }
-
-    return decodedToken.user; // Retorna les dades de l'usuari si el token és vàlid
+    const decodedToken = jwtDecode(token);
+    const currentTime = Date.now() / 1000;
+    return decodedToken.exp > currentTime;
   } catch (error) {
-    console.error('Error decodificant el token:', error);
+    console.error('Invalid token:', error);
+    localStorage.removeItem('authToken');
+    return false;
+  }
+
+
+}
+
+export function getUserRole() {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decodedToken = jwtDecode(token);
+    return decodedToken.sub.role;
+  } catch (error) {
+    console.error('Invalid token:', error);
     return null;
   }
 }
 
-/*function logout() {
-    localStorage.removeItem('authToken');
-    // Altres accions de logout com redirigir a la pàgina de login
-  }
-  */
 
-export default getUser;
+export function logout() {
+  localStorage.removeItem('authToken');
+  window.location.href = '/login'; // Redirigeix a la pàgina de login
+}

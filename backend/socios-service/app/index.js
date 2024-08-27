@@ -1,32 +1,38 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
-const { collectDefaultMetrics, register }  = require('prom-client');
+const { collectDefaultMetrics, register } = require('prom-client');
 const port = 3000;
-AUTH_SERVICE_URI= "http://auth-service:5001";
+AUTH_SERVICE_URI = "http://auth-service:5001";
 app.use(express.json());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8080'); // Especifica el origen permès
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization'];
-  
+
   // Permitir acceso sin autenticación al endpoint /metrics
   if (req.path === '/metrics') {
     return next();
   }
-  
-  
-  
+
+
+
   if (!token) {
-      return res.status(401).json({ msg: 'Missing token' });
+    return res.status(401).json({ msg: 'Missing token' });
   }
 
   try {
-      const response = await axios.post(`${AUTH_SERVICE_URI}/auth/verify`, {}, {
-          headers: { 'Authorization': token }
-      });
-      req.user = response.data.user;
-      next();
+    const response = await axios.post(`${AUTH_SERVICE_URI}/auth/verify`, {}, {
+      headers: { 'Authorization': token }
+    });
+    req.user = response.data.user;
+    next();
   } catch (error) {
-      return res.status(401).json({ msg: 'Invalid token' });
+    return res.status(401).json({ msg: 'Invalid token' });
   }
 };
 
@@ -48,19 +54,19 @@ const db = new sqlite3.Database('/db/socis.db');
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS Socis (
-      id INTEGER PRIMARY KEY,
-      nom TEXT,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
       telefon TEXT,
-      quota REAL,
+      quota REAL NOT NULL,
       categoria TEXT
     )
   `);
   db.run(`
     CREATE TABLE IF NOT EXISTS Pagaments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      soci_id INTEGER,
-      data TEXT,
-      import REAL,
+      soci_id INTEGER NOT NULL,
+      data TEXT NOT NULL,
+      import REAL NOT NULL,
       FOREIGN KEY(soci_id) REFERENCES Socis(id)
     )
   `);
@@ -92,93 +98,81 @@ app.get('/', (req, res) => {
   });
 });
 
-// Ruta per registrar un nou soci
-app.post('/socis', (req, res) => {
-  const { id, nom, telefon, quota, categoria } = req.body;
-  db.run(`INSERT INTO Socis (id,nom, telefon, quota, categoria) VALUES (?, ?, ?, ?, ?)`,
-    [id, nom, telefon, quota, categoria],
-    function(err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.status(201).json({ id: this.lastID });
-    }
-  );  
-});
 
-// Ruta per registrar un pagament
-app.post('/pagaments', (req, res) => {
-  const { soci_id, data, importe } = req.body;
-  db.run(`INSERT INTO Pagaments (soci_id, data, import) VALUES (?, ?, ?)`,
-    [soci_id, data, importe],
-    function(err) {
+// Ruta per obtenir socis amb les quotes pendents
+app.get('/socisAmbCuotesPendents', (req, res) => {
+  const year = req.query.year || new Date().getFullYear(); // Obtenim l'any dels paràmetres de consulta o utilitzem l'any actual per defecte
+  db.all(
+    `SELECT s.id AS Targeta, s.nom AS Nom, s.telefon AS Telefon, s.quota AS Quota,
+      (12 * s.quota) - IFNULL((SELECT SUM(p.import) 
+                               FROM Pagaments p 
+                               WHERE p.soci_id = s.id AND strftime('%Y', p.data) = ?), 0) AS total_pendent
+     FROM Socis s;`,
+    [year],
+    (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.status(201).json({ id: this.lastID });
+      res.json(rows);
     }
   );
 });
 
-// Ruta per obtenir tots els socis
-app.get('/socis', (req, res) => {
-  db.all(`SELECT * FROM Socis`, [], (err, rows) => {
+
+// Ruta per crear un nou soci
+app.post('/socis', (req, res) => {
+  const { nom, telefon, quota , categoria } = req.body;
+
+  if (!nom || !telefon || !quota) {
+    return res.status(400).json({ error: "Falten dades per crear el soci" });
+  }
+
+  const query = `INSERT INTO Socis (nom, telefon, quota, categoria) VALUES (?, ?, ?,?)`;
+  db.run(query, [nom, telefon, quota, categoria], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json(rows);
+    res.status(201).json({ id: this.lastID, nom, telefon, quota });
   });
 });
 
-// Ruta per obtenir un soci per ID
-app.get('/socis/:id', (req, res) => {
-  const { id } = req.params;
-  db.get(`SELECT * FROM Socis WHERE id = ?`, [id], (err, row) => {
+
+
+// Ruta per actualitzar un soci existent
+app.put('/socis/:id', (req, res) => {
+  const {id } = req.params;
+  const { nom, telefon, quota, categoria } = req.body;
+
+  if (!nom || !telefon || !quota || !categoria) {
+    return res.status(400).json({ error: "Falten dades per actualitzar el soci" });
+  }
+
+  const query = `UPDATE Socis SET nom = ?, telefon = ?, quota = ?, categoria = ? WHERE id = ?`;
+  db.run(query, [nom, telefon, quota,categoria, id], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!row) {
-      return res.status(404).json({ error: 'Soci no trobat' });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: "Soci no trobat" });
     }
-    res.json(row);
-  });
-});
-// Ruta para verificar si un socio existe por ID
-app.get('/valid/:id', (req, res) => {
-  const { id } = req.params;
-  db.get(`SELECT COUNT(*) AS count FROM Socis WHERE id = ?`, [id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    if (row.count > 0) {
-      return res.status(200).json({ error: err.message });
-    } else {
-      return res.status(400).json({ error: err.message });
-    }
+    res.json({ id, nom, telefon, quota, categoria });
   });
 });
 
-// Ruta per obtenir les quotes pagades i pendents d'un soci
-app.get('/socis/:id/quotes', (req, res) => {
+
+// Ruta per eliminar un soci existent
+app.delete('/socis/:id', (req, res) => {
   const { id } = req.params;
-  db.all(`SELECT * FROM Pagaments WHERE soci_id = ?`, [id], (err, rows) => {
+
+  const query = `DELETE FROM Socis WHERE id = ?`;
+  db.run(query, id, function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    const pagaments = rows;
-    db.get(`SELECT quota FROM Socis WHERE id = ?`, [id], (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      const quota = row.quota;
-      const totalPagat = pagaments.reduce((acc, pagament) => acc + pagament.importe, 0);
-      const totalPendents = quota - totalPagat;
-      res.json({
-        pagaments,
-        totalPagat,
-        totalPendents
-      });
-    });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: "Soci no trobat" });
+    }
+    res.json({ message: "Soci eliminat correctament" });
   });
 });
 
