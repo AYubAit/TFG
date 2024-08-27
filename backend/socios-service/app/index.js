@@ -7,8 +7,9 @@ AUTH_SERVICE_URI = "http://auth-service:5001";
 app.use(express.json());
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:8080'); // Especifica el origen permès
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 const verifyToken = async (req, res, next) => {
@@ -129,7 +130,7 @@ app.get('/socisAmbCuotesPendents', (req, res) => {
     `SELECT s.id AS Targeta, s.nom AS Nom, s.telefon AS Telefon, s.quota AS Quota,
       (12 * s.quota) - IFNULL((SELECT SUM(p.import) 
                                FROM Pagaments p 
-                               WHERE p.soci_id = s.id AND strftime('%Y', p.data) = ?), 0) AS total_pendent
+                               WHERE p.soci_id = s.id AND strftime('%Y', p.data) = ?), 0) AS total_pendent, s.categoria AS Categoria
      FROM Socis s;`,
     [year],
     (err, rows) => {
@@ -162,23 +163,23 @@ app.post('/socis', (req, res) => {
 
 
 // Ruta per actualitzar un soci existent
-app.put('/socis/:id', (req, res) => {
-  const {id } = req.params;
-  const { nom, telefon, quota, categoria } = req.body;
+app.put('/socis/', (req, res) => {
 
-  if (!nom || !telefon || !quota || !categoria) {
+  const { Targeta, Nom, Telefon, Quota, Categoria } = req.body;
+
+  if (!Targeta ||!Nom || !Telefon || !Quota || !Categoria) {
     return res.status(400).json({ error: "Falten dades per actualitzar el soci" });
   }
 
   const query = `UPDATE Socis SET nom = ?, telefon = ?, quota = ?, categoria = ? WHERE id = ?`;
-  db.run(query, [nom, telefon, quota,categoria, id], function (err) {
+  db.run(query, [Nom, Telefon, Quota, Categoria, Targeta], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
     if (this.changes === 0) {
       return res.status(404).json({ error: "Soci no trobat" });
     }
-    res.json({ id, nom, telefon, quota, categoria });
+    res.json({ Targeta, Nom, Telefon, Quota, Categoria });
   });
 });
 

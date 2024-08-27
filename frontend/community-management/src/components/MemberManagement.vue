@@ -10,11 +10,12 @@
 
             <!-- Taula de dades amb camp de cerca -->
             <v-toolbar-title>Gestió de Socis</v-toolbar-title>
-            <v-data-table :headers="headers" :items="formattedSocis" :items-per-page="6" class="elevation-1">
+            <v-data-table :headers="headers" :items="formattedSocis" :items-per-page="6" class="elevation-10">
                 <!-- Slot per a les accions -->
                 <template #[`item.actions`]="{ item }">
-                    <v-icon small @click="openDialog('edit', item)">mdi-pencil</v-icon>
-                    <v-icon small @click="deleteSoci(item.id)">mdi-delete</v-icon>
+                    <v-icon size="large"  color="yellow" @click="openDialog('edit', item)" >mdi-pencil</v-icon>
+                    
+                    <v-icon size="large" color="red" @click="deleteSoci(item.Targeta)">mdi-delete</v-icon>
                 </template>
             </v-data-table>
 
@@ -69,7 +70,7 @@ const isEditMode = ref(false);
 const headers = [
     { title: 'Targeta', key: 'Targeta' },
     { title: 'Nom', key: 'Nom' },
-    { title: 'Telèfon', key: 'Telefon' },
+    
     { title: 'Quota', key: 'Quota' },
     { title: 'Total', key: 'total_pendent' },
     { title: 'Accions', key: 'actions', sortable: false },
@@ -97,17 +98,19 @@ const formattedSocis = computed(() => {
 });
 
 onMounted(() => {
-    fetch('http://localhost:3000/socisAmbCuotesPendents')
-        .then((response) => response.json())
-        .then((data) => {
-            socis.value = data;
-            socisLoaded.value = true;
-            console.log('Socis:', socis.value);
-        })
-        .catch((error) => {
-            console.error('Error fetching data:', error);
-        });
+  loadSocis(); // Carrega socis quan es munta el component
 });
+const loadSocis = () => {
+  fetch('http://localhost:3000/socisAmbCuotesPendents')
+    .then((response) => response.json())
+    .then((data) => {
+      socis.value = data;
+      socisLoaded.value = true;
+    })
+    .catch((error) => {
+      console.error('Error fetching data:', error);
+    });
+};
 
 // Obre el diàleg per a crear o editar socis
 const openDialog = (mode, soci = null) => {
@@ -126,11 +129,13 @@ const closeDialog = () => {
 
 // Desa o crea un soci
 const saveSoci = () => {
+    console.log(editedSoci.value)
     if (isEditMode.value) {
         // Lògica per a actualitzar el soci
-        fetch(`http://localhost:3000/socis/${editedSoci.value.Targeta}`, {
+        fetch(`http://localhost:3000/socis`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
+            
             body: JSON.stringify(editedSoci.value),
         })
             .then((response) => response.json())
@@ -138,6 +143,7 @@ const saveSoci = () => {
                 const index = socis.value.findIndex((soci) => soci.Targeta === updatedSoci.id);
                 if (index !== -1) socis.value.splice(index, 1, updatedSoci);
                 closeDialog();
+                loadSocis();  // Carrega socis quan es actualitza un soci
             })
             .catch((error) => console.error('Error updating soci:', error));
     } else {
@@ -151,7 +157,8 @@ const saveSoci = () => {
             .then((newSoci) => {
                 socis.value.push(newSoci);
                 closeDialog();
-                
+                loadSocis();  // Carrega socis quan es crea un soci
+
             })
             .catch((error) => console.error('Error creating soci:', error));
     }
@@ -162,6 +169,7 @@ const deleteSoci = (id) => {
     fetch(`http://localhost:3000/socis/${id}`, { method: 'DELETE' })
         .then(() => {
             socis.value = socis.value.filter((soci) => soci.id !== id);
+            loadSocis();  // Carrega socis quan es elimina un soci
         })
         .catch((error) => console.error('Error deleting soci:', error));
 };
