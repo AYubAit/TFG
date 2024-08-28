@@ -99,9 +99,22 @@ app.get('/', (req, res) => {
   });
 });
 
-// mostrar un mensaje y los nombres de las tablas existentes
+// Mostrar un determinat socis
 app.get('/socis/:id', (req, res) => {
-  db.all(`SELECT * FROM Socis WHERE id=?`, [req.params.id], (err, rows) => {
+  const { id } = req.params;
+  db.all(`SELECT * FROM Socis WHERE id=?`, [id], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  
+    return res.status(200).json(rows);
+  });
+});
+
+
+// Retronar tots els socis Prubeas
+app.get('/socis', (req, res) => {
+  db.all(`SELECT * FROM Socis`, (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -110,10 +123,10 @@ app.get('/socis/:id', (req, res) => {
   });
 });
 
+app.get('/pagaments/:id', (req, res) => {
+  const { id } = req.params;
 
-// mostrar un mensaje y los nombres de las tablas existentes
-app.get('/socis', (req, res) => {
-  db.all(`SELECT * FROM Socis`, (err, rows) => {
+  db.all(`SELECT * FROM Pagaments WHERE soci_id=?`, [id], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -199,6 +212,28 @@ app.delete('/socis/:id', (req, res) => {
     res.json({ message: "Soci eliminat correctament" });
   });
 });
+
+
+
+
+// Ruta per crear un nou soci
+app.post('/pagaments', (req, res) => {
+  const { username, data, importe} = req.body;
+
+  if (!username || !data || !importe) {
+    return res.status(400).json({ error: "Falten dades per crear el pagament" });
+  }
+
+  const query = `INSERT INTO Pagaments (soci_id, data, import) VALUES (?, ?, ?)`;
+  db.run(query, [username, data, importe], function (err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(201).json({ id: this.lastID, username, data, importe });
+  });
+});
+
+
 
 app.listen(port, () => {
   console.log(`Servidor escoltant a http://localhost:${port}`);

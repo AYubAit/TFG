@@ -22,16 +22,28 @@ def login():
     username = request.json.get("username")
     password = request.json.get("password")
     REQUEST_COUNT.inc()
-    id = username
+
+    
 
     # Consultar al microservicio de socios para verificar existencia del usuario
-    response = requests.get(f"{SOCIOS_SERVICE_URI}/socis/{id}")
+    response = requests.get(f"{SOCIOS_SERVICE_URI}/socis/{username}")
 
     if response.status_code != 200:
         return jsonify({"msg": "No eres socio - not found in socios"}), 404
 
     # Obtener la información del usuario desde el microservicio
-    user_info = response.json()
+ 
+    try:
+        # Verificar que la respuesta sea JSON
+        user_info = response.json()
+        print("Contenido de user_info:", user_info)  # Imprimir el contenido de user_info
+
+        # Si user_info es una lista, accede al primer elemento
+        if isinstance(user_info, list):
+            user_info = user_info[0]
+    except (ValueError, IndexError) as e:
+        return jsonify({"msg": f"Error al parsear la respuesta del microservicio: {str(e)}"}), 500
+
     role = user_info.get("categoria")  # Obtener el rol del campo 'categoria'
 
     # Verificar si el usuario ya existe en la base de datos de autenticación

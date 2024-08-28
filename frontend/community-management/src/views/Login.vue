@@ -45,6 +45,7 @@ export default {
         const data = await response.json();
 
         if (response.ok) {
+          console.log('Login successful:', data); 
           localStorage.setItem('authToken', data.access_token); // Guarda el token JWT
           const redirect = route.query.redirect || '/';
           alert('Redirejeixo.' + redirect );

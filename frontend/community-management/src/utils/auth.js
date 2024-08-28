@@ -42,6 +42,20 @@ export function getUserRole() {
   }
 }
 
+export function getUserId() {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decodedToken = jwtDecode(token);
+    return decodedToken.sub.username;
+  } catch (error) {
+    console.error('Invalid token:', error);
+    return null;
+  }
+}
 
 export function logout() {
   localStorage.removeItem('authToken');

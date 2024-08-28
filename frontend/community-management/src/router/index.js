@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import AdminHome from '../views/AdminHome.vue'
 import UserHome from '../views/UserHome.vue'
 import KioskView from '../views/KioskView.vue'
@@ -15,24 +14,19 @@ const routes = [
     name: 'UserLogin',
     component: () => import('@/views/Login.vue'),
   },
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView,
-    meta: { requiresAuth: false }
-  },
+  
   
   {
     path: '/admin',
     name: 'AdminHome',
     component: AdminHome,
-    meta: { requiresAuth: true, role: 'junta' }
+    meta: { requiresAuth: true }
   },
   {
     path: '/user',
     name: 'UserHome',
     component: UserHome,
-    meta: { requiresAuth: true, role: 'Soci' }
+    meta: {  }
   },
   {
     path: '/kiosk',
